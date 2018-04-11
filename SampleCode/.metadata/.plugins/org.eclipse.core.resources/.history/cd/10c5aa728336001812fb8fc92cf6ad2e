@@ -1,0 +1,4 @@
+import Node;
+public class LinkedList {
+	Node head;
+}

@@ -1,0 +1,45 @@
+import java.util.*;
+
+public class Node {
+	Node next = null;
+	int value;
+	
+	public Node() {}
+	
+	public Node(int value) {
+		this.value = value;
+	}
+	
+	void insert(int d) {
+		Node tail = new Node(d);
+		Node curr = this;
+		
+		while(curr.next != null) {
+			curr = curr.next;
+		}
+		curr.next = tail;
+	}
+	
+	Node delete(Node head,int d) {
+		Node n = head;
+		
+		while(n.next != null ) {
+			if(n.next.value == d) {
+				n.next = n.next.next;
+				return head;
+			}
+		}
+		return head;
+	}
+	
+	Node deleteDuplicates() {
+		HashSet<Integer> set = new HashSet<>();
+		Node head =  this;
+		
+		while(head.next != null) {
+			
+		}
+		
+		return this;
+	}
+}

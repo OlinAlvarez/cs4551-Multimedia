@@ -1,0 +1,56 @@
+
+To compile files you only need the CS_4551Alvarez.java, and Image.java files.
+
+Compile the CS_4551Alvarez.java file.
+
+Then select which action you would like to take.
+
+1. Step 1 generates cocentric circles, the user should enter desired thickness of the circles,
+and how far apart you would like the circles to be.
+After words the user is prompted to enter a k value.
+This value reduces the image by a factor of K, the software first checks if K is a power of 2,
+which is at most 16.
+
+Then it applies 3 Different resizing techniques, they are saved as
+reduced_circles_nofilter.ppm
+reduced_circles_filter1.ppm
+reduced_circles_filter2.ppm
+
+the no filter simply selects the top left image of a k * k grid of pixels and maps it to the new image
+Filters 1, 2 apply two different 3x3 filters to the resizing of the image.
+All 4 images, that is the original cocentric circles, the no filter reduction, and both filter reductions will be displayed
+
+2. Step 2 reads a file and implements LZW encoding.
+User must enter a text file,
+then the software checks if it is valid file, implements LZW encoding/decoding.
+the software then save the original contents, the generated dictionary, the encoded contents of the file, and the decoded
+contents of the file, along with the compression ratio, all to a new file with the following format;
+
+filename
+
+original contents:
+------------------
+
+Dictionary:
+-----------
+
+index	value
+
+Encoded:
+-------
+
+
+Decoded
+-------
+
+Compression ratio:
+
+
+
+This file will be named Dict-Coding-"original filename".txt
+
+the encoded contents of the file,
+as well as the dictionary,
+and the compression ratio will be printed on the console as well
+
+-Olin-Mao Alvarez

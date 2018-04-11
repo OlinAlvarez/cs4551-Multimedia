@@ -1,0 +1,15 @@
+Digital Image Data Represenatiations
+24bit to 8 bi COlor Quantization.
+
+Binary Representation of
+                    R   G   B   segR   sebG   segB
+100 = b2(01100100)  3   1   0    47     15      0
+240 = b2(11110000)  7   4   0    111    63      0
+
+this is wrong use the forumla
+
+R/G =  32 * Segment + 16
+B = 64 * Segment + 16
+
+write a for loop to generate these RGB values.
+

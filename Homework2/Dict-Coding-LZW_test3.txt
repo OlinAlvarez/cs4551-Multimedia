@@ -1,0 +1,31 @@
+LZW_test3.txt
+
+ Original Content:
+--------------------
+xxyyxyxyxxyyyxyxxyxxyyx
+
+--Dictionary Contents: 
+
+Index-----Value 
+ 0	   x
+ 1	   y
+ 2	   xx
+ 3	   xy
+ 4	   yy
+ 5	   yx
+ 6	   xyx
+ 7	   xyxx
+ 8	   xyy
+ 9	   yyx
+ 10	   xyxxy
+ 11	   yxx
+ 12	   xyyx
+
+ Encoded text:
+--------------------
+0 0 1 1 3 6 3 4 7 5 8 0
+ Decoded text:
+--------------------
+xxyyxyxyxxyyyxyxxyxxyyx
+
+ Compression ratio: 0.9583333333333334

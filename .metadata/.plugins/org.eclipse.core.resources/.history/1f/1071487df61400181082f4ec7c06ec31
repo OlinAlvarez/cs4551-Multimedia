@@ -1,0 +1,110 @@
+import java.awt.image.BufferedImage;
+import java.lang.Math;
+public class ConvertibleImage extends Image {
+	private String filename;
+	private static BufferedImage img;
+	public ConvertibleImage(int w, int h) {
+		super(w, h);
+    	img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		// TODO Auto-generated constructor stub
+	}
+	public ConvertibleImage(String fn) {
+		super(fn);
+		filename = fn;
+		readPPM(filename);
+		img = super.getImg();
+		System.out.println(img.toString());
+	}
+	public void showPix() {
+		for(int y = 0; y < super.getH(); y++){
+            for(int x = 0; x < super.getW(); x++){
+            	displayPixelValue(x, y);
+            }
+		}
+	}
+    public void cvtGrayScale(){
+        BufferedImage grayImg = new BufferedImage(img.getWidth(),img.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+        //System.out.println("new image created");:
+		int[] rgb = new int[3];
+		int b,g,r;
+		for(int y = 0; y < super.getH(); y++){
+            for(int x = 0; x < super.getW(); x++){
+                getPixel(x,y,rgb);
+                b = rgb[0];
+                g = rgb[1];
+                r = rgb[2];
+            	int gray =(int) Math.round((0.299 * r) + (0.587 * g) + (0.114 * b));
+            	if(gray >  255) gray = 255;
+            	if(gray <  0) gray = 0;
+            	rgb[0] = gray;
+               	rgb[1] = gray;
+            	rgb[2] = gray;
+            	setPixel(x,y,rgb);
+            }
+        }
+		display();
+		String grayfilename = "gray_" + filename;
+		write2PPM(grayfilename);
+    }
+  
+    public void cvtNLevel(int levels){
+    	cvtGrayScale();
+    	int[] limits = new int[levels];
+    	int pad = 255 / (levels - 1);
+    	int lim = 0;
+    	if(levels == 2) {
+    		limits[0] = 127;
+    		limits[1] = 255;
+    	}
+    	else {
+			for(int i = 0; i < levels; i++) {
+				limits[i] = lim;
+				lim += pad;
+			}
+    	}
+    	int[] rgb = new int[3];
+    	int gray;
+		for(int y = 0; y < super.getH(); y++){
+            for(int x = 0; x < super.getW(); x++){
+                getPixel(x,y,rgb);
+                gray = rgb[0];
+                
+                for(int l = 0; l < levels; l++) {
+                	if(gray <= limits[l]) {
+                		gray = limits[l];
+                		break;
+                	}
+                }
+                rgb[0] = gray;
+                rgb[1] = gray;
+                rgb[2] = gray;
+                
+            	setPixel(x,y,rgb);
+            }
+        }
+		display();
+		
+    	
+    }
+    public void cvt8bitIndexedUCQ(){
+    
+    }
+    public void cvt8bitIndexed(){
+    
+    }
+    public int getRGB(int x, int y) {
+    	
+    	return 0;
+    }
+    //lut stands for look up table
+    public void genTable(int[][] lut) {
+    	int rOffset = 16;
+    	int gOffset = 16;
+    	int bOffset = 32;
+    	for(int i = 0; i < 256; i++) {
+    		lut[i][0] = rOffset;
+    		lut[i][1] = gOffset;
+    		lut[i][2] = bOffset;
+    	}
+    }
+}

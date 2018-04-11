@@ -1,0 +1,142 @@
+/*******************************************************
+ CS4551 Multimedia Software Systems
+ @ Author: Olin-Mao Alvarez 
+ *******************************************************/
+import java.util.Scanner;
+import java.lang.Math;
+public class CS4551_Alvarez{
+static Scanner in = new Scanner(System.in);
+public static void main(String[] args){
+
+    int choice;
+    do{
+        choice = displayMenu();
+        if(choice > 3 || choice < 0){
+            System.out.println("error invalid choice!");
+        }
+        switch(choice){
+            case 1: aliasing();
+                break;
+            case 2: dictionaryCoding();
+                break;
+            case 3: System.exit(0);
+                break;
+        }
+    }while(choice != 3);
+  }
+
+  public static void usage(){
+    System.out.println("\nUsage: java CS4551_Main [input_ppm_file]\n");
+  }
+  public static int displayMenu(){
+    
+    System.out.println("-------Main Menu-------");
+    System.out.println("1. Aliasing");
+    System.out.println("2. Dictionary Coding");
+    System.out.println("3. Quit");
+    return in.nextInt(); 
+  }
+  
+  public static void aliasing(){
+    Image img = new Image(512,512);
+    img.setBlank();
+    int center =  512 / 2;
+    int defaultRadius =  5;
+    
+    System.out.print("Enter thickness of circles: ");
+    int thickness = in.nextInt();
+        
+    System.out.print("\nEnter radii distance of circles: ");
+    int radius = in.nextInt();
+    radius += defaultRadius; 
+    int innerRadius = radius;
+    
+    int x, y, outerRadius, distance;
+    int[] blackPixel = {0,0,0};
+    double theta = 0.0;
+    while(center + radius + thickness < 512) {
+    	
+    	outerRadius = radius + thickness;
+    	
+    	while(radius < outerRadius ) {
+    		theta = 0.0;
+    		while(theta <= 90) {
+				x =  (int) ((int) radius * Math.cos(theta));
+				y =  (int) ((int) radius * Math.sin(theta));
+				
+				if(x < 512 && y < 512) {
+					img.setPixel(center + x, center + y, blackPixel);    		
+					img.setPixel(center + x, center - y, blackPixel);
+					img.setPixel(center - x, center + y, blackPixel);
+					img.setPixel(center - x, center - y, blackPixel);
+					
+				}
+				theta += 0.01;
+			}
+			radius++;
+    	}
+    	
+    	radius +=  innerRadius;
+    }
+    
+    img.write2PPM("circles");
+    img.display();
+    int k;
+   
+    do {
+		System.out.println("Enter K: ");
+		k = in.nextInt();
+    }while(k < 2 ||  k > 16  || (k & (k - 1)) != 0);
+    
+    reduceImageNoFilter(img,k);
+    reduceImageFilter1(img,k);
+    reduceImageFilter2(img,k);
+    
+ }
+  public static void reduceImageNoFilter(Image img, int k) {
+	  Image reducedImage = new Image(512/k, 512/k);
+	  int[] pixel =  new int[3];
+	  for(int y = 0; y < reducedImage.getH(); y++) { 
+		 for(int x = 0; x < reducedImage.getW(); x++) {
+			 img.getPixel(x * k, y * k, pixel);
+			 reducedImage.setPixel(x,y,pixel);
+		 } 
+	  }
+	  reducedImage.display();
+	  reducedImage.write2PPM("reduced_circles_nofilter");
+  }
+  public static void reduceImageFilter1(Image img, int k) {
+	  Image reducedImage = new Image(512/k, 512/k);
+	  double[][] kernel1 = {{1/9,1/9,1/9},{1/9,1/9,1/9},{1/9,1/9,1/9}};
+	  int[] pixel =  new int[3];
+	  for(int y = 0; y < reducedImage.getH(); y++) { 
+		 for(int x = 0; x < reducedImage.getW(); x++) {
+			 img.getPixel(x * k, y * k, pixel);
+			 reducedImage.setPixel(x,y,pixel);
+		 } 
+	  }
+	  reducedImage.display();
+	  reducedImage.write2PPM("reduced_circles_filter1"); 
+  }
+  public static void reduceImageFilter2(Image img, int k) {
+	  Image reducedImage = new Image(512/k, 512/k);
+	  int[] pixel =  new int[3];
+	  for(int y = 0; y < reducedImage.getH(); y++) { 
+		 for(int x = 0; x < reducedImage.getW(); x++) {
+			 img.getPixel(x * k, y * k, pixel);
+			 reducedImage.setPixel(x,y,pixel);
+		 } 
+	  }
+	  reducedImage.display();
+	  reducedImage.write2PPM("reduced_circles_filter2");  
+	  
+  }
+  public static void dictionaryCoding(){
+  
+  }
+  //Helper Function for y position 
+  public static int getYPlacement(int x, int r) {
+	 return (int) Math.sin(Math.acos( x / r));
+	//return (int) Math.sqrt( (r*r) - (x*x));  
+  } 
+}

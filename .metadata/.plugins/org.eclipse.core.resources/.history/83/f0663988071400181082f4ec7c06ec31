@@ -1,0 +1,62 @@
+import java.awt.image.BufferedImage;
+import java.lang.Math;
+public class ConvertibleImage extends Image {
+	private String filename;
+	private static BufferedImage img;
+	public ConvertibleImage(int w, int h) {
+		super(w, h);
+    	img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		// TODO Auto-generated constructor stub
+	}
+	public ConvertibleImage(String fn) {
+		super(fn);
+		filename = fn;
+		readPPM(filename);
+		img = super.getImg();
+		System.out.println(img.toString());
+	}
+	public void showPix() {
+		for(int y = 0; y < super.getH(); y++){
+            for(int x = 0; x < super.getW(); x++){
+            	super.displayPixelValue(x, y);
+            }
+		}
+	}
+    public void cvtGrayScale(){
+        BufferedImage grayImg = new BufferedImage(img.getWidth(),img.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+        //System.out.println("new image created");:
+		byte b;
+		byte g;
+		byte r; 
+        
+		for(int y = 0; y < super.getH(); y++){
+            for(int x = 0; x < super.getW(); x++){
+                int pix = img.getRGB(x,y);
+				b = (byte) pix;
+				g = (byte) (pix >> 8);
+				r = (byte) (pix >> 16);
+                double gray = Math.round((0.299 * r) + (0.587 * g) + (0.114 * b));
+                
+                if(Math.abs(gray) > 1) {
+                	System.out.println( "\n" + x + "," + y + " : " +  gray);
+                	System.out.println("r " + r + ", g " + g + ", b " + b);
+                	System.out.println("rgb : "+ pix + "\n");
+                }
+            }
+        }
+    }
+  
+    public void cvtNLevel(){
+    
+    }
+    public void cvt8bitIndexedUCQ(){
+    
+    }
+    public void cvt8bitIndexed(){
+    
+    }
+    public int getRGB(int x, int y) {
+    	
+    	return 0;
+    }
+}

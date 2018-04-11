@@ -1,0 +1,81 @@
+/*******************************************************
+ CS4551 Multimedia Software Systems
+ @ Author: Olin-Mao Alvarez 
+ *******************************************************/
+import java.util.Scanner;
+import java.lang.Math;
+public class CS4551_Alvarez{
+static Scanner in = new Scanner(System.in);
+public static void main(String[] args){
+
+    int choice;
+    do{
+        choice = displayMenu();
+        if(choice > 3 || choice < 0){
+            System.out.println("error invalid choice!");
+        }
+        switch(choice){
+            case 1: aliasing();
+                break;
+            case 2: dictionaryCoding();
+                break;
+            case 3: System.exit(0);
+                break;
+        }
+    }while(choice != 3);
+  }
+
+  public static void usage(){
+    System.out.println("\nUsage: java CS4551_Main [input_ppm_file]\n");
+  }
+  public static int displayMenu(){
+    
+    System.out.println("-------Main Menu-------");
+    System.out.println("1. Aliasing");
+    System.out.println("2. Dictionary Coding");
+    System.out.println("3. Quit");
+    return in.nextInt(); 
+  }
+  
+  public static void aliasing(){
+    Image img = new Image(512,512);
+    img.setBlank();
+    int center =  512 / 2;
+    int defaultRadius =  5;
+    
+    System.out.print("Enter thickness of circles: ");
+    int thickness = in.nextInt();
+        
+    System.out.print("\nEnter radii distance of circles: ");
+    int radius = in.nextInt();
+    radius += defaultRadius;
+    
+    int x, y, outerRadius;
+    int[] blackPixel = {0,0,0};
+    while(center + radius < 512) {
+    	outerRadius = radius + thickness;
+    	while(radius < outerRadius ) {
+			for(x = center; x < center + radius; x++) {
+				y = getYPlacement( (x - center), radius);
+				
+				if(center - y > 0 ) img.setPixel(x, center - y, blackPixel);
+				//if(center - x > 0 ) img.setPixel(center - x, center - y, blackPixel);
+				//if(center + y < 512 ) img.setPixel(x, center + y, blackPixel);
+				if(center + x < 512 ) img.setPixel(center - x, center + y, blackPixel);
+			}
+			radius++;
+    	}
+    	radius +=  radius - thickness;
+    }
+    
+    img.display();
+  }
+
+  public static void dictionaryCoding(){
+  
+  }
+  //Helper Function for y position 
+  public static int getYPlacement(int x, int r) {
+	return (int) Math.floor(Math.sqrt( (r*r) - (x*x)));  
+  } 
+}

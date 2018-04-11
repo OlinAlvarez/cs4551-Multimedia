@@ -1,0 +1,236 @@
+import java.awt.image.BufferedImage;
+import java.lang.Math;
+public class ConvertibleImage extends Image {
+	private String filename;
+	private static BufferedImage img;
+	public ConvertibleImage(int w, int h) {
+		super(w, h);
+    	img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		// TODO Auto-generated constructor stub
+	}
+	public ConvertibleImage(String fn) {
+		super(fn);
+		filename = fn;
+		readPPM(filename);
+		img = super.getImg();
+		System.out.println(img.toString());
+	}
+	public void showPix() {
+		for(int y = 0; y < super.getH(); y++){
+            for(int x = 0; x < super.getW(); x++){
+            	displayPixelValue(x, y);
+            }
+		}
+	}
+    public void cvtGrayScale(){
+        BufferedImage grayImg = new BufferedImage(img.getWidth(),img.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+        //System.out.println("new image created");:
+		int[] rgb = new int[3];
+		int b,g,r;
+		for(int y = 0; y < super.getH(); y++){
+            for(int x = 0; x < super.getW(); x++){
+                getPixel(x,y,rgb);
+                b = rgb[0];
+                g = rgb[1];
+                r = rgb[2];
+            	int gray =(int) Math.round((0.299 * r) + (0.587 * g) + (0.114 * b));
+            	if(gray >  255) gray = 255;
+            	if(gray <  0) gray = 0;
+            	rgb[0] = gray;
+               	rgb[1] = gray;
+            	rgb[2] = gray;
+            	setPixel(x,y,rgb);
+            }
+        }
+		display();
+		String grayfilename = "gray_" + filename;
+		write2PPM(grayfilename);
+    }
+  
+    public void cvtNLevel(int levels){
+    	cvtGrayScale();
+    	ConvertibleImage duplicate = new ConvertibleImage(filename);
+    	int[] limits = new int[levels];
+    	int pad = 255 / (levels - 1);
+    	int lim = 0;
+    	if(levels == 2) {
+    		limits[0] = 127;
+    		limits[1] = 255;
+    	}
+    	else {
+			for(int i = 0; i < levels; i++) {
+				limits[i] = lim;
+				lim += pad;
+			}
+    	}
+    	
+    	errorDifusion(duplicate,levels,limits);
+    	int[] rgb = new int[3];
+    	int gray;
+		for(int y = 0; y < super.getH(); y++){
+            for(int x = 0; x < super.getW(); x++){
+                getPixel(x,y,rgb);
+                gray = rgb[0];
+                
+                for(int l = 0; l < levels; l++) {
+                	if(gray <= limits[l]) {
+                		gray = limits[l];
+                		break;
+                	}
+                }
+                rgb[0] = gray;
+                rgb[1] = gray;
+                rgb[2] = gray;
+                
+            	setPixel(x,y,rgb);
+            }
+        }
+		display();
+		write2PPM("NLevel-"+filename);
+		
+    	
+    }
+    //this buffered image is grey
+    public void errorDifusion(ConvertibleImage img, int levels, int[] limits) {
+    	int[] rgb = new int[3];
+    	int[] tempPix1 = new int[3];
+    	int[] tempPix2 = new int[3];
+    	int[] tempPix3 = new int[3];
+    	int[] tempPix4 = new int[3];
+    	int pix1,pix2,error;
+    	for(int y = 0; y < img.getH()-1; y++) {
+     		 for(int x = 1; x < img.getW()-1; x++) {
+
+                img.getPixel(x,y,rgb);
+                pix1 = rgb[0];
+                pix2 = pix1;
+                for(int l = 0; l < levels; l++) {
+                	if(pix1 <= limits[l]) {
+                		pix1 = limits[l];
+                		break;
+                	}
+                }
+                error = pix2 - pix1;
+                rgb[0] = pix1;
+                rgb[1] = pix1;
+                rgb[2] = pix1;
+                img.setPixel(x, y, rgb);
+                
+                img.getPixel(x+1,y,tempPix1);
+                modifyPixel(tempPix1,error,7);
+                img.setPixel(x+1,y,tempPix1);
+                
+                img.getPixel(x-1, y+1,tempPix2);
+                modifyPixel(tempPix2,error,3);
+                img.setPixel(x-1, y+1,tempPix2);
+                
+                img.getPixel(x, y+1,tempPix3);
+                modifyPixel(tempPix3,error,5);
+                img.setPixel(x, y+1,tempPix3);
+                
+                img.getPixel(x+1, y+1,tempPix4);
+                modifyPixel(tempPix4,error,1);
+                img.setPixel(x+1, y+1,tempPix4);
+                
+                /*      pixel[x + 1][y    ] := pixel[x + 1][y    ] + quant_error * 7 / 16
+      pixel[x - 1][y + 1] := pixel[x - 1][y + 1] + quant_error * 3 / 16
+      pixel[x    ][y + 1] := pixel[x    ][y + 1] + quant_error * 5 / 16
+      pixel[x + 1][y + 1] := pixel[x + 1][y + 1] + quant_error * 1 / 16
+                 */
+    		}
+    	}
+
+                img.display();
+    }
+    public void modifyPixel(int[] pix, int error, int k) {
+    	pix[0] += error * k/16.0;    	
+    	pix[0] += error * k/16.0;
+    	pix[0] += error * k/16.0;
+    }
+    public void cvt8bitIndexedUCQ(){
+    		int[][] lut = new int[256][3];
+    		genTable(lut);
+    		printLUT(lut);
+    	int[] bIndices = {0,32,96,160,224,255};
+    	int[] otherIndices = {0,16,48,80,112,144,176,208,240,255};
+    	int[] rgb = new int[3];
+    	int r,g,b;
+		for(int y = 0; y < super.getH(); y++){
+            for(int x = 0; x < super.getW(); x++){
+                getPixel(x,y,rgb);
+                r = rgb[2];
+                g = rgb[1];
+                b = rgb[0];
+                
+                for(int i = 0; i < bIndices.length; i++) {
+                	if(b <= bIndices[i]) {
+                		b = bIndices[i];
+                		break;
+                	}
+                }
+                for(int i = 0; i < otherIndices.length; i++) {
+                	if(g <= otherIndices[i]) {
+                		g = otherIndices[i];
+                		break;
+                	}
+                }
+                for(int i = 0; i < otherIndices.length; i++) {
+                	if(r <= otherIndices[i]) {
+                		r = otherIndices[i];
+                		break;
+                	}
+                }
+                rgb[0] = b;
+                rgb[1] = g;
+                rgb[2] = r;
+                System.out.println("rgb: " + r + "," + g + "," + b);
+                
+            	setPixel(x,y,rgb);
+            }
+        }
+        display();
+        write2PPM("index-"+filename);
+    }
+    public void cvt8bitIndexed(){
+    
+    }
+    public int getRGB(int x, int y) {
+    	
+    	return 0;
+    }
+    //lut stands for look up table
+    public void genTable(int[][] lut) {
+    	int bCtr = 0;
+    	int gCtr = 0;
+    	int rCtr = 0;
+    	for(int i = 0; i < 256; i++) {
+    		bCtr = i % 4;
+    		if(bCtr == 0 && i > 1) gCtr++;
+    		if(gCtr == 8) { gCtr = 0; rCtr++;}
+    		lut[i][0] = 32 * (rCtr + 1) - 16; 
+    		lut[i][1] = 32 * (gCtr + 1) - 16; 
+    		lut[i][2] = 64 * (bCtr + 1) - 32;	
+    	}
+    }
+    public void medianCut(){
+    	int bHi = 0,bLow = 255,bRange;
+    	int rHi = 0,rLow = 255,rRange;
+    	int gHi = 0,gLow = 255,gRange;
+    	int b,g,r;
+    	int[] rgb =  new int[3];
+		for(int y = 0; y < super.getH(); y++){
+            for(int x = 0; x < super.getW(); x++){
+                getPixel(x,y,rgb);
+                
+            }
+		}
+    }
+    public void printLUT(int[][] lut) {
+    	System.out.println("Index     R     G     B");
+    	System.out.println("------------------------");
+    	for (int i = 0; i < 256; i++) {
+    		System.out.println(i + "   " + lut[i][0] + "   " + lut[i][1] + "  " +lut[i][2] );
+		}
+    }
+    
+}

@@ -1,0 +1,41 @@
+Question 1: Name 4 different kinds of multimedia discussed in class?
+
+Answer: Graphics, Audio, Images, Video.
+
+Question 2: Explain the difference between multimedia and hypermedia?
+
+Answer: Hypermedia contains cross-references to other media "Hyperlinks".
+
+Question 3: What is the difference between an image type and 2d Graphics?
+
+Answer: Images are just collections of pixels, whereas 2d graphics contain computer generated objects such as vectors, 2d Graphics are also reviseable.
+
+Question 4: What is the difference between an 8 bit and 4 bit color image?
+
+Answer: the difference is the amont of colors which can be displayed by each, Because 8 bit images contain less information they are capable of displaying fewer colors, furthermore 8 bit images reference an index to a LUT.
+
+Question 5: Explain qualatatively, 1. what type of image will yield good visual results when quantized with the uniform color quantization scheme 2 What kind of images won’t give a good performance 3 Explain why the median cut algorithm for color quantization performs very well in such case?
+
+Answer:
+
+Question 6: What kind of compression does GIF use?
+
+Answer: LZW.
+
+Question 7: explain why the matrix  D = {{0,6,3}{1,7,4}{2,8,5}} is not a good dithering matrix, show what happens when the input image has constant brightness of I = 6?
+
+Answer: D is not a good dithering matrix because it can cause banding, because the pixels turn on in a specific easily spotted pattern.
+
+Question 8: What does error diffusion do?
+
+Answer: Distributes error throughout the entire such that the total error is as close as possible to 0.
+
+Question 9: What two steps of the digitization process?
+
+Answer: Sampling, extracting a subset of the signal and Quantization, approximating continuous range vlues by a set of discrete values in bits.
+
+Question 10: What is Nyquist Shannon’s Sampling Theorem?
+
+Answer: In order to reconstruct a signal, sample it at a rate greater than twice it's highest frequency component.
+
+Question 11: What is the role of prefiltering for a signal that has band B?

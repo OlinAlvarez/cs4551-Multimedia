@@ -1,0 +1,40 @@
+import java.lang.Math;
+public class ConvertibleImage extends Image {
+	private String filename;
+	public ConvertibleImage(String fn) {
+		super(fn);
+		this.filename = fn;
+	}
+	public ConvertibleImage(int w, int h) {
+		super(w, h);
+		// TODO Auto-generated constructor stub
+	}
+    public static void cvtGrayScale(Image img){
+        #Image grayImg = new Image(filename + "_gray");
+        System.out.println("new image created");
+        for(int y = 0; y < img.getH(); y++){
+            for(int x = 0; x < img.getW(); x++){
+                int pix = getRGB(x,y);
+                int b = (byte) pix;
+                int g = (byte) (pix >> 8);
+                int r = (byte) (pix >> 16);
+                int gray =  (int) Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+                System.out.println( x + ',' + y + gray);
+            }
+        }
+    }
+  
+    public static void cvtNLeve(Image img){
+    
+    }
+    public static void cvt8bitIndexedUCQ(Image img){
+    
+    }
+    public static void cv28bitIndexed(Image img){
+    
+    }
+    public static int getRGB(int x, int y) {
+    	
+    	return 0;
+    }
+}

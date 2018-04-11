@@ -1,0 +1,13 @@
+What is multimedia?
+
+THe use of serveral different digitized computer media, not dealing with any analogue data.
+
+Mixture of different media tpes
+Digital Always
+Voluminous
+Interacive
+Synchronization
+Real time
+
+Understanding these properties is important to design good multimedia
+

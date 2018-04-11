@@ -1,0 +1,48 @@
+import java.awt.image.BufferedImage;
+import java.lang.Math;
+public class ConvertibleImage extends Image {
+	private String filename;
+	private static BufferedImage img;
+	public ConvertibleImage(int w, int h) {
+		super(w, h);
+    	img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		// TODO Auto-generated constructor stub
+	}
+	/*
+	public ConvertibleImage(String fn) {
+		super(fn);
+	}*/
+	public ConvertibleImage(String fn) {
+		super(fn);
+		filename = fn;
+		readPPM(filename);
+	}
+    public void cvtGrayScale(){
+        grayImg = new BufferedImage(img.getWidth(),img.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+        //System.out.println("new image created");:
+        for(int y = 0; y < super.getH(); y++){
+            for(int x = 0; x < super.getW(); x++){
+                int pix = img.getRGB(x,y);
+                int b = (byte) pix;
+                int g = (byte) (pix >> 8);
+                int r = (byte) (pix >> 16);
+                int gray =  (int) Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+                System.out.println( x + ',' + y + " : " +  gray);
+            }
+        }
+    }
+  
+    public void cvtNLevel(){
+    
+    }
+    public void cvt8bitIndexedUCQ(){
+    
+    }
+    public void cvt8bitIndexed(){
+    
+    }
+    public int getRGB(int x, int y) {
+    	
+    	return 0;
+    }
+}

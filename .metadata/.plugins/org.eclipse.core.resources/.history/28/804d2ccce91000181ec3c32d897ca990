@@ -1,0 +1,11 @@
+
+public class ConvertibleImage extends Image {
+	public ConvertibleImage(String fn) {
+		super(fn);
+	}
+	public ConvertibleImage(int w, int h) {
+		super(w, h);
+		// TODO Auto-generated constructor stub
+	}
+
+}
