@@ -1,9 +1,9 @@
 /*******************************************************
- CS4551 Multimedia Software Systems
+G CS4551 Multimedia Software Systems
  @ Author: Olin-Mao Alvarez 
  *******************************************************/
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 import java.io.*;
@@ -14,7 +14,8 @@ public class CS4551_Alvarez{
 	static Scanner in = new Scanner(System.in);
 	static int Original_Width;
 	static int Original_Height;
-	
+	static int n;
+
 	public static void main(String[] args) throws IOException{
 	if(args.length != 1){
 	  usage();
@@ -147,9 +148,32 @@ public class CS4551_Alvarez{
 		list.add(crChan);
 		
 		float[][] cbSubsample = subsample(cbChan);
-		printMatrix(cbSubsample);
 		float[][] crSubsample = subsample(crChan);
-		printMatrix(crSubsample);
+		int cbWidth = cbSubsample.length;
+		int cbDepth = cbSubsample[0].length;
+		int crWidth = crSubsample.length;
+		int crDepth = crSubsample[0].length;
+		int yWidth = yChan.length;
+		int yDepth = yChan[0].length;
+		
+		if(cbSubsample.length %8 != 0 || cbSubsample[0].length % 8 != 0) cbSubsample = resizeChannel(cbSubsample);
+		if(crSubsample.length %8 != 0 || crSubsample[0].length % 8 != 0) crSubsample = resizeChannel(crSubsample);
+		if(yChan.length %8 != 0 || yChan[0].length % 8 != 0) yChan = resizeChannel(yChan);
+		
+		float[][] yDct = dct(yChan);
+		float[][] cbDct = dct(cbSubsample);
+		float[][] crDct = dct(crSubsample);
+		
+		float[][] yRevert = inverseDct(yDct,yWidth,yDepth);
+		float[][] cbRevert = inverseDct(cbDct,cbWidth,cbDepth);
+		float[][] crRevert = inverseDct(crDct,crWidth,crDepth);
+			
+		if(!yRevert.equals(yChan))
+			System.out.println("y channel is not the same after dct");
+		if(!cbRevert.equals(cbChan))
+			System.out.println("cb channel is not the same after dct");
+		if(!crRevert.equals(crChan))
+			System.out.println("cr channel is not the same after dct");
 		return list; 
 	}
 	
@@ -178,7 +202,301 @@ public class CS4551_Alvarez{
 		img.display();
 		return img;
 	}
+	
+	public static float[][] dct(float[][] channel) {
+		
+		/*
+		 * This is where the actual DCT begins
+		 */
+		
+		float cu, cv, sumx =(float) 0.0, sumy =(float) 0.0;
+		float[][] block = new float[8][8];
+		float[][] dct =  new float[channel.length][channel[0].length];
+		int blockRow = 0, blockCol = 0;
+		
+		while(blockRow < channel.length && blockCol < channel[0].length) {
+				
+			for(int i = 0; i < 8; i++) {
+				for (int j = 0; j < 8; j++) {
+					block[i][j] =  channel[blockRow + i][blockCol + j];
+				}
+			}
+			
+			printMatrix(block);
+ 				
+			for(int u = 0; u < 8; u++) {
+				if(u == 0) cu = (float) Math.sqrt(2) / 2;
+				else cu = 1;
 
+				for(int v = 0; v < 8; v++) {
+				if(v == 0) cv = (float) Math.sqrt(2) / 2;
+				else cv = 1;
+					sumx = (float) 0.0;
+					for(int x = 0; x < 8; x++) {
+						sumy = (float) 0.0;
+						for(int y = 0; y < 8; y++) {
+							sumy += block[x][y] * Math.cos(((2 * x + 1) * u * Math.PI ) / 16 ) * Math.cos( ((2 * y + 1) * v * Math.PI ) / 16); 
+						}
+						sumx += sumy;
+					}
+					dct[blockRow + u][blockCol + v] = (float) (cu * cv * sumx) / 4;
+				}
+			}
+			blockRow += 8;
+			if(blockRow > channel.length) {
+				blockRow = 0;
+				blockCol += 8;
+			}
+		
+		}
+		return dct;
+	}
+	public static float[][] inverseDct(float[][] channel, int previousWidth, int previousDepth) {
+		float cu, cv, sumx =(float) 0.0, sumy =(float) 0.0;
+		float[][] block = new float[8][8];
+		float[][] dct =  new float[channel.length][channel[0].length];
+		int blockRow = 0, blockCol = 0;
+		
+		while(blockRow < channel.length && blockCol < channel[0].length) {
+				
+			for(int i = 0; i < 8; i++) {
+				for (int j = 0; j < 8; j++) {
+					block[i][j] =  channel[blockRow + i][blockCol + j];
+				}
+			}	
+			//CS4551_Alvarez.printMatrix(block); 			
+			for(int u = 0; u < 8; u++) {
+				if(u == 0) cu = (float) Math.sqrt(2) / 2;
+				else cu = 1;
+
+				for(int v = 0; v < 8; v++) {
+				if(v == 0) cv = (float) Math.sqrt(2) / 2;
+				else cv = 1;
+					sumx = (float) 0.0;
+					for(int x = 0; x < 8; x++) {
+						sumy = (float) 0.0;
+						for(int y = 0; y < 8; y++) {
+							sumy += block[x][y] *(cu * cv) / 4 * Math.cos(((2 * x + 1) * u * Math.PI ) / 16 ) * Math.cos( ((2 * y + 1) * v * Math.PI ) / 16);	
+						}
+						sumx += sumy;
+					}
+					dct[blockRow + u][blockCol + v] = sumx;
+				}
+			}
+			blockRow += 8;
+			if(blockRow > channel.length) {
+				blockRow = 0;
+				blockCol += 8;
+			}
+		
+		}
+		return dct;
+	}
+	
+	public static int[][] quantization(float[][] dctBlock, boolean isLuma){
+		do {
+			System.out.println(" Enter an n value for compression");
+			n = in.nextInt();
+		}while( n > 5 || n < 0);
+		
+		
+		int[][] lumaTable = {{4,4,4,8,8,16,16,32},
+							 {4,4,4,8,8,16,16,32},
+							 {4,4,8,8,16,16,32,32},
+							 {8,8,8,16,16,32,32,32},
+							 {8,8,16,16,32,32,32,32},
+							 {16,16,16,32,32,32,32,32},
+							 {16,16,32,32,32,32,32,32},
+							 {32,32,32,32,32,32,32,32}};
+		
+		int[][] chromaTable =  {{8,8,8,16,32,32,32,32},
+								{8,8,8,16,32,32,32,32},
+								{8,8,16,32,32,32,32,32},
+								{16,16,32,32,32,32,32,32},
+								{32,32,32,32,32,32,32,32},
+								{32,32,32,32,32,32,32,32},
+								{32,32,32,32,32,32,32,32},
+								{32,32,32,32,32,32,32,32}};
+		int[][] table;
+		if(isLuma)	table = lumaTable;
+		else table = chromaTable;
+		
+		int[][] quantTable = new int[8][8];
+		
+		int power = (int) Math.pow(2, n);
+		for(int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				quantTable[i][j] =(int) Math.round( dctBlock[i][j] / (table[i][j] * power));
+			}
+		}
+		return quantTable;
+	}
+	public static float[][] dequantization(int[][] quantBlock, boolean isLuma){
+				
+		
+		int[][] lumaTable = {{4,4,4,8,8,16,16,32},
+							 {4,4,4,8,8,16,16,32},
+							 {4,4,8,8,16,16,32,32},
+							 {8,8,8,16,16,32,32,32},
+							 {8,8,16,16,32,32,32,32},
+							 {16,16,16,32,32,32,32,32},
+							 {16,16,32,32,32,32,32,32},
+							 {32,32,32,32,32,32,32,32}};
+		
+		int[][] chromaTable =  {{8,8,8,16,32,32,32,32},
+								{8,8,8,16,32,32,32,32},
+								{8,8,16,32,32,32,32,32},
+								{16,16,32,32,32,32,32,32},
+								{32,32,32,32,32,32,32,32},
+								{32,32,32,32,32,32,32,32},
+								{32,32,32,32,32,32,32,32},
+								{32,32,32,32,32,32,32,32}};
+		int[][] table;
+		if(isLuma)	table = lumaTable;
+		else table = chromaTable;
+		
+		float[][] dequantTable = new float[8][8];
+		
+		int power = (int) Math.pow(2, n);
+		for(int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				dequantTable[i][j] = quantBlock[i][j] * (table[i][j] * power);
+			}
+		}
+		return dequantTable;
+	}
+    
+	public static void encode(int[][] block) {
+
+        int m = block.length;
+        int n = block[0].length;
+        int t = 0;
+        ArrayList<int[]> encoding = new ArrayList<>();
+        int listIndex = 0;
+        int prev = block[0][0];
+        int runLength = 1;
+        int[] currentRun =  new int[2];
+        int[] list =  new int[64];
+        int index = 0;
+        for (int i = 0; i < 16 - 1; i++) {
+            if (i % 2 == 1) {
+                int x = i < 8 ? 0 : i - 8 + 1;
+                int y = i < 8 ? i : 8 - 1;
+                while (x < 8 && y >= 0 ) {
+                	list[index] = block[x][y];
+                	index++;
+                	x++;
+                	y--;
+                }
+            } else {
+                // up right
+                int x = i < 8 ? i : 8 - 1;
+                int y = i < 8 ? 0 : i - 8 + 1;
+                while (x >= 0 && y < 8) {
+                    if(block[x][y] == prev) {
+                		runLength++;
+                	}else {
+                		currentRun = new int[2];
+                		currentRun[0] = prev;
+                		currentRun[1] = runLength;
+                		System.out.println("prev " + prev + " curr " + block[x][y]);
+                		System.out.println("runnum " + currentRun[0] + " length" + currentRun[1]);
+                		encoding.add(listIndex++,currentRun);
+                		System.out.println("last entry" + encoding.get(encoding.size() -1)[0] + ","+ encoding.get(encoding.size() -1)[1]);
+                		prev =  block[x][y];
+                		runLength = 1;
+                	}
+                	x--;
+                	y++;
+                }
+            }
+        }
+        currentRun[0] = prev;
+        currentRun[1] = runLength;
+        System.out.println("runnum " + currentRun[0] + " length" + currentRun[1]);
+		System.out.println("encoding");
+		encoding.get(0)[1]--;
+		for(int i = 0; i < encoding.size(); i++) {
+			System.out.println(encoding.get(i)[0] + "," + encoding.get(i)[1] );
+		}
+        System.out.println();
+    }
+	public static float[][] resizeChannel(float[][] channel ){
+		
+	
+		int depth =  channel.length;
+		int width =  channel[0].length;
+		System.out.println("depth " + depth + " width " + width);
+		if(depth % 8 != 0) depth += 8 - (depth  % 8);
+		if(width % 8 != 0) width += 8 - (width  % 8);
+		System.out.println("depth " + depth + " width " + width);
+		
+		float[][] res = new float[depth][width];
+		
+		for(int i = 0; i < depth; i++) {
+			for (int j = 0; j < width; j++) {
+				if( j >= channel[0].length || i >= channel.length ) {
+					res[i][j] = 0;
+				}
+				else {
+					res[i][j] = channel[i][j];
+				}
+			}
+		}
+		return res;
+		
+	}
+	public static float[][] subsample(float[][] channel){
+		/* 
+		 * averages by indexing to every other element of the matrix then
+		 * summing that element and it's three neighbours and dividing by 4
+		 * */
+		float[][] sub = new float[channel.length / 2][channel[0].length / 2];
+		int row = 0, col = 0;
+		float avg = 0;
+		for(int i = 0; i < channel.length - 1; i += 2) {
+			col = 0;
+			for(int j = 0; j < channel[0].length - 1; j += 2) {
+				avg =  channel[i][j] + channel[i+1][j] + channel[i][j + 1] + channel[i + 1][j + 1];
+				avg /= 4;
+				sub[row][col++] = avg;
+			}
+			row++;
+			
+		}
+		return sub;
+	}	
+	public static void printMatrix(float[][] mtx) {
+		for(int i = 0; i < mtx.length; i++) {
+			for(int j = 0; j < mtx[i].length; j++) {
+				System.out.printf("%.2f ", mtx[i][j]);
+			}
+			System.out.println();
+		}
+		System.out.println();
+	}	
+	public static void printMatrix(int[][] mtx) {
+		for(int i = 0; i < mtx.length; i++) {
+			for(int j = 0; j < mtx[i].length; j++) {
+				System.out.printf(mtx[i][j]+ " ");
+			}
+			System.out.println();
+		}
+		System.out.println();
+	}	
+	/*
+	public static void writeMatrix(float[][] jmtx) throws IOException {
+		File verificationFile = new File("Algorithm_verification.txt");
+		FileWriter fw = new FileWriter(verificationFile);
+		BufferedWriter bw = new BufferedWriter(fw);
+		bw.write("------------------------------------------------------------------------------\n");
+		for(int i = 0; i < mtx.length; i++) {
+			for(int j = 0; j < mtx[i].length; j++) {
+				bw.write(mtx[i][j] + " | ");
+			}
+			bw.write("------------------------------------------------------------------------------\n");
+		}
+	}*/
 	public static void truncate(float y,float cb,float cr){
 		if(y < 0)
 			y = 0;
@@ -198,81 +516,5 @@ public class CS4551_Alvarez{
 			num = 0;
 		if(num > 255)
 			num = 255;
-	}
-
-	public static void dct(float[][] block) {
-		float cu, cv, sumx =(float) 0.0, sumy =(float) 0.0;
-		float[][] grid = new float[8][8];
-		
-		for(int u = 0; u < 8; u++) {
-			if(u == 0) cu = (float) 0.70710678118;
-			else cu = 1;
-
-			for(int v = 0; v < 8; v++) {
-			if(v == 0) cv = (float) 0.70710678118;
-			else cv = 1;
-				sumx = (float) 0.0;
-				for(int x = 0; x < 8; x++) {
-					sumy = (float) 0.0;
-					for(int y = 0; y < 8; y++) {
-						sumy += block[x][y] * (Math.cos((2 * (x + 1) * u * Math.PI )/16)) * (Math.cos((2 * (y + 1) * v * Math.PI )/16)); 
-					}
-					sumx += sumy;
-				}
-				grid[u][v] = (float) (0.25 * cu * cv * sumx);
-			}
-		}
-	}
-	public static void inverseDct(float[][] block) {
-		float cu, cv, sumcv =(float) 0.0, sumcu =(float) 0.0;
-		float[][] grid = new float[8][8];
-		
-		for(int x = 0; x < 8; x++) {
-			for(int y = 0; y < 8; y++) {
-				
-				sumcu = (float) 0.0;	
-				for(int u = 0; u < 8; u++) {
-					if(u == 0) cu = (float) 0.70710678118;
-					else cu = 1;
-					
-					sumcv = (float) 0.0;
-					for(int v = 0; v < 8; v++) {
-						if(v == 0) cv = (float) 0.70710678118;
-						else cv = 1;
-						
-						sumcv += block[x][y] * cv * cv * (Math.cos((2 * (x + 1) * u * Math.PI )/16)) * (Math.cos((2 * (y + 1) * v * Math.PI )/16)); 
-					}
-					sumcu += sumcv;
-				}
-				grid[x][y] = (float) (0.25 * sumcu);
-			}
-		}
-	}
-	public static float[][] subsample(float[][] channel){
-		/* 
-		 * averages by indexing to every other element of the matrix then
-		 * summing that element and it's three neighbours and dividing by 4
-		 * */
-		float[][] sub = new float[channel.length / 4][channel[0].length / 4];
-		int row = 0, col = 0;
-		float avg = 0;
-		for(int i = 0; i < channel.length - 1; i += 2) {
-			for(int j = 0; j < channel[0].length - 1; j += 2) {
-				avg =  channel[i][j] + channel[i+1][j] + channel[i][j + 1] + channel[i + 1][j + 1];
-				avg /= 4;
-				sub[row++][col++] = avg;
-			}
-			
-		}
-		return sub;
-	}
-	
-	public static void printMatrix(float[][] mtx) {
-		for(int i = 0; i < mtx.length; i++) {
-			for(int j = 0; j < mtx[i].length; j++) {
-				System.out.print(mtx[i][j] + " ");
-			}
-			System.out.println();
-		}
 	}
 }
