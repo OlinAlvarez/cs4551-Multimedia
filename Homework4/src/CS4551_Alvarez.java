@@ -6,6 +6,9 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
+
+import javax.management.modelmbean.ModelMBeanOperationInfo;
+
 import java.io.*;
 import java.lang.Math;
 import java.nio.charset.Charset;
@@ -37,50 +40,62 @@ public class CS4551_Alvarez{
 	 	PixelMatrix[][] macroblocks = getBlocks(tarImg);
 	 	//testBlocks(macroblocks);
 	 	rebuildImage(macroblocks);
-	 	getMotionVectors(macroblocks, refImg);
+	 	int[][][] motionVectors =  getMotionVectors(macroblocks, refImg);
+	 	
 	}
-	public static void getMotionVectors(PixelMatrix[][] macroblocks, Image refImage) {
-	    int[] pixel;
-        int total = 0;
-        for (int i = 0; i < macroblocks.length; i++) {
-			for (int j = 0; j < macroblocks[i].length; j++) {
-                pixel =  new int[3];
-				for(int y = 0; y < n; y++) {
-					for(int x = 0; x < n; x++) {
-					}
-				}
+	public static void getResidualImage(PixelMatrix[][] macroblocks, int[][][] motionVectors, Image reference) {
+		Image residualImage = new Image(reference.getW(),reference.getH());
+		
+		
+		residualImage.display();
+		residualImage.write2PPM("residualImage.ppm");
+	}
+	public static int[][][] getMotionVectors(PixelMatrix[][] macroblocks, Image refImage) {
+		int[][][] motionVectors =  new int[macroblocks.length][macroblocks[0].length][2];
+		for (int y = 0; y < macroblocks.length; y++) {
+			for (int x = 0; x < macroblocks[y].length; x++) {
+				motionVectors[x][y] = motionVector(x + n, y + n,macroblocks[x][y],refImage);
 			}
-		}	
-	}
+		}
+		return motionVectors;
+	}	
     public static int[] motionVector(int x, int y, PixelMatrix block, Image reference){
-		int xOffset, endX, yOffset, endY, runningTotal = 0;
+		int xOffset, endX, yOffset, endY;
 		
 		if(x - p < 0) xOffset = 0;
 		else xOffset = x - p;
 		if(y - p < 0) yOffset = 0;
 		else yOffset = y - p;
 		
-		if(x + p > reference.getW()) endX = reference.getW();
-		else endX = x + p;
-		if(y + p > reference.getW()) endY = reference.getH();
-		else endY = y + p;
+		if(x + p  + n> reference.getW()) endX = reference.getW();
+		else endX = x + p + n;
+		if(y + p + n > reference.getW()) endY = reference.getH();
+		else endY = y + p + n;
 		
-		PixelMatrix tempMatrix;
 		int[] pixel;
-        
+        int[] motionVector = new int[2];
         int total = 0, min = 0;
 		while(xOffset + n < endX && yOffset + n < endY) {	
-			tempMatrix = new PixelMatrix(n, n);
 		
 			for(int j = 0; j < n; j++) {
 				pixel = new int[3];
 				for(int i = 0; i < n; i++) {
 				    reference.getPixel(i + xOffset, j + yOffset, pixel);
-                
+				    total += meanSquareDif(block.getPixel(i, j), pixel);
 				}
 			}
+			if(total < min) {
+				min = total;
+				motionVector[0] = x - xOffset;
+				motionVector[0] = y - yOffset;	
+			}
+			xOffset++;
+			if(xOffset > endX - n) {
+				xOffset = 0;
+				yOffset++;
+			}
         }    
-        return null;
+        return motionVector;
     } 
 	public static List<PixelMatrix> getPSearchBlocks(int x, int y, Image reference){
 		List<PixelMatrix> matrices = new ArrayList<>();
