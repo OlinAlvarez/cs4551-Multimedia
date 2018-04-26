@@ -1,0 +1,10 @@
+public class PixelMatrix{
+    private int rows;
+    private int cols;
+    private int[][][] matrix;
+    public PixelMatrix(int rows, int cols){
+        this.rows = rows;
+        this.cols = cols;
+        matrix = new 
+    }
+}
