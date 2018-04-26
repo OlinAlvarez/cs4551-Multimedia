@@ -40,16 +40,48 @@ public class CS4551_Alvarez{
 	 	getMotionVectors(macroblocks, refImg);
 	}
 	public static void getMotionVectors(PixelMatrix[][] macroblocks, Image refImage) {
-		for (int i = 0; i < macroblocks.length; i++) {
+	    int[] pixel;
+        int total = 0;
+        for (int i = 0; i < macroblocks.length; i++) {
 			for (int j = 0; j < macroblocks[i].length; j++) {
+                pixel =  new int[3];
 				for(int y = 0; y < n; y++) {
 					for(int x = 0; x < n; x++) {
-						
 					}
 				}
 			}
 		}	
 	}
+    public static int[] motionVector(int x, int y, PixelMatrix block, Image reference){
+		int xOffset, endX, yOffset, endY, runningTotal = 0;
+		
+		if(x - p < 0) xOffset = 0;
+		else xOffset = x - p;
+		if(y - p < 0) yOffset = 0;
+		else yOffset = y - p;
+		
+		if(x + p > reference.getW()) endX = reference.getW();
+		else endX = x + p;
+		if(y + p > reference.getW()) endY = reference.getH();
+		else endY = y + p;
+		
+		PixelMatrix tempMatrix;
+		int[] pixel;
+        
+        int total = 0, min = 0;
+		while(xOffset + n < endX && yOffset + n < endY) {	
+			tempMatrix = new PixelMatrix(n, n);
+		
+			for(int j = 0; j < n; j++) {
+				pixel = new int[3];
+				for(int i = 0; i < n; i++) {
+				    reference.getPixel(i + xOffset, j + yOffset, pixel);
+                
+				}
+			}
+        }    
+        return null;
+    } 
 	public static List<PixelMatrix> getPSearchBlocks(int x, int y, Image reference){
 		List<PixelMatrix> matrices = new ArrayList<>();
 		int startX, endX, startY, endY, runningTotal = 0;
