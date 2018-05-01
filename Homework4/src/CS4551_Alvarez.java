@@ -41,7 +41,7 @@ public class CS4551_Alvarez{
 			PixelMatrix[][] macroblocks = getBlocks(tarImg);
 			//rebuildImage(macroblocks);
 			int[][][] motionVectors =  getMotionVectors(macroblocks, refImg);
-			writeMotionVectors(motionVectors,args[0], args[1],"mv.txt");	 	
+//			writeMotionVectors(motionVectors,args[0], args[1],"mv.txt");	 	
 			getResidualImage(macroblocks,motionVectors,refImg);
 		}
 		public static void getResidualImage(PixelMatrix[][] macroblocks, int[][][] motionVectors, Image reference) {
@@ -72,12 +72,6 @@ public class CS4551_Alvarez{
 			if(y - p < 0) yOffset = 0;
 			else yOffset = y - p;
 			int input;
-			do{
-				block.createImage();
-				block.showImage();	
-				input = in.nextInt();
-
-			}while(input != 1);
 		if(x + p  + n> reference.getW()) endX = reference.getW();
 		else endX = x + p + n;
 		if(y + p + n > reference.getW()) endY = reference.getH();
@@ -108,7 +102,8 @@ public class CS4551_Alvarez{
         }    
 	int v1  =  motionVector[0];	
 	int v2  =  motionVector[1];	
-	System.out.printf("motion vector (%d, %d) : %d,%d\n",x,y,v1,v2);
+	System.out.printf("msd %d motion vector (%d,%d)\n",min,v1,v2);
+	//System.out.printf("motion vector (%d, %d) : %d,%d\n",x,y,v1,v2);
         return motionVector;
     } 
 	public static List<PixelMatrix> getPSearchBlocks(int x, int y, Image reference){
@@ -247,17 +242,20 @@ public class CS4551_Alvarez{
 		img.write2PPM("output.ppm");
 	}
 	public static void writeMotionVectors(int[][][] motionvectors,String target, String reference, String filename) throws IOException{
+		System.out.println("Writting mv.txt file");
 		int rows = motionvectors.length;
 		int cols = motionvectors[0].length;
 		File encodedText = new File(filename);
 		FileWriter fw = new FileWriter(encodedText);
 		BufferedWriter writer = new BufferedWriter(fw);
+//		writer.write("");
 		writer.write("#Name: Olin-Mao Alvarez\n");
 		writer.write("#Target image name: " + target + '\n');
 		writer.write("#Reference image name: " + reference + '\n');
 		writer.write("#Number of target macro blocks: "
 			+ rows + " x  " + cols + " (image size is " 
 			+ rows * n + " x " + cols * n  + ")\n");
+		
 		for(int row = 0; row < rows; row++){
 			for(int col = 0; col < cols; cols++){
 				writer.write("[ " + motionvectors[row][col][0]
@@ -265,6 +263,8 @@ public class CS4551_Alvarez{
 			}
 			writer.write('\n');
 		}
+
 		writer.close();
+		System.out.println(filename + " written");
 	}
 }
