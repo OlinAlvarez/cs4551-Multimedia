@@ -26,7 +26,7 @@ public class PixelMatrix{
     	
     	for(int y = 0; y < this.cols; y++) {
     		for (int x = 0; x < this.rows; x++) {
-				img.setPixel(x, y, getPixel(x,y));
+				this.img.setPixel(x, y, getPixel(x,y));
 			}
     	}
     }

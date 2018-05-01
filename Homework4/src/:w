@@ -21,71 +21,61 @@ public class CS4551_Alvarez{
 	static int n,p;
 	public static void main(String[] args) throws IOException{
 		HashSet<Integer> nSet = new HashSet<>(Arrays.asList(8,16,24));
-			HashSet<Integer> pSet = new HashSet<>(Arrays.asList(4,8,12,16));
+		HashSet<Integer> pSet = new HashSet<>(Arrays.asList(4,8,12,16));
 
-			if(args.length != 2){
-			  usage();
-			  System.exit(1);
-			}
-			Image refImg = new Image(args[0]);
-			Image tarImg = new Image(args[1]);
-			do {
-				System.out.println("Enter n value (8,16,24) : ");
-				n = in.nextInt();
-			}while(!nSet.contains(n));
-			do {
-				System.out.println("Enter p value(4,8,12,16) : ");
-				p = in.nextInt();
-			}while(!pSet.contains(p));
-
-			PixelMatrix[][] macroblocks = getBlocks(tarImg);
-			//rebuildImage(macroblocks);
-			int[][][] motionVectors =  getMotionVectors(macroblocks, refImg);
-			writeMotionVectors(motionVectors,args[0], args[1],"mv.txt");	 	
-			getResidualImage(macroblocks,motionVectors,refImg);
+		if(args.length != 2){
+		  usage();
+		  System.exit(1);
 		}
-		public static void getResidualImage(PixelMatrix[][] macroblocks, int[][][] motionVectors, Image reference) {
-			Image res = new Image(reference.getW(),reference.getH());
-				
-			for (int y = 0; y <res.getH(); y++) {
-				for (int x = 0; x < macroblocks.length; x++) {
-				}
-			}
-				
-			res.display();
-			res.write2PPM("res.ppm");
-		}
-		public static int[][][] getMotionVectors(PixelMatrix[][] macroblocks, Image refImage) {
-			int[][][] motionVectors =  new int[macroblocks.length][macroblocks[0].length][2];
-			for (int y = 0; y < macroblocks[0].length; y++) {
-				for (int x = 0; x < macroblocks.length; x++) {
-					motionVectors[x][y] = motionVector(x * n, y * n,macroblocks[x][y],refImage);
-				}
-			}
-			return motionVectors;
-		}	
-	    public static int[] motionVector(int x, int y, PixelMatrix block, Image reference){
-			int xOffset, endX, yOffset, endY;
-			
-			if(x - p < 0) xOffset = 0;
-			else xOffset = x - p;
-			if(y - p < 0) yOffset = 0;
-			else yOffset = y - p;
-			int input;
-			do{
-				block.createImage();
-				block.showImage();	
-				input = in.nextInt();
+		Image refImg = new Image(args[0]);
+		Image tarImg = new Image(args[1]);
+		do {
+			System.out.println("Enter n value (8,16,24) : ");
+			n = in.nextInt();
+		}while(!nSet.contains(n));
+		do {
+			System.out.println("Enter p value(4,8,12,16) : ");
+			p = in.nextInt();
+		}while(!pSet.contains(p));
 
-			}while(input != 1);
+	 	PixelMatrix[][] macroblocks = getBlocks(tarImg);
+	 	//testBlocks(macroblocks);
+	 	rebuildImage(macroblocks);
+	 	int[][][] motionVectors =  getMotionVectors(macroblocks, refImg);
+		writeMotionVectors(motionVectors,args[0], args[1],"mv.txt");	 	
+	}
+	public static void getResidualImage(PixelMatrix[][] macroblocks, int[][][] motionVectors, Image reference) {
+		Image residualImage = new Image(reference.getW(),reference.getH());
+		
+		
+		residualImage.display();
+		residualImage.write2PPM("residualImage.ppm");
+	}
+	public static int[][][] getMotionVectors(PixelMatrix[][] macroblocks, Image refImage) {
+		int[][][] motionVectors =  new int[macroblocks.length][macroblocks[0].length][2];
+		for (int y = 0; y < macroblocks[0].length; y++) {
+			for (int x = 0; x < macroblocks.length; x++) {
+				motionVectors[x][y] = motionVector(x + n, y + n,macroblocks[x][y],refImage);
+			}
+		}
+		return motionVectors;
+	}	
+    public static int[] motionVector(int x, int y, PixelMatrix block, Image reference){
+		int xOffset, endX, yOffset, endY;
+		
+		if(x - p < 0) xOffset = 0;
+		else xOffset = x - p;
+		if(y - p < 0) yOffset = 0;
+		else yOffset = y - p;
+		
 		if(x + p  + n> reference.getW()) endX = reference.getW();
 		else endX = x + p + n;
 		if(y + p + n > reference.getW()) endY = reference.getH();
 		else endY = y + p + n;
-		//System.out.printf("(%d,%d) motion vector from (%d,%d) -> (%d,%d)\n",x,y,xOffset,yOffset,endX,endY);	
+		
 		int[] pixel;
         int[] motionVector = new int[2];
-        int total = 0, min = 2147483647;
+        int total = 0, min = 0;
 		while(xOffset + n < endX && yOffset + n < endY) {	
 		
 			for(int j = 0; j < n; j++) {
@@ -106,9 +96,6 @@ public class CS4551_Alvarez{
 				yOffset++;
 			}
         }    
-	int v1  =  motionVector[0];	
-	int v2  =  motionVector[1];	
-	System.out.printf("motion vector (%d, %d) : %d,%d\n",x,y,v1,v2);
         return motionVector;
     } 
 	public static List<PixelMatrix> getPSearchBlocks(int x, int y, Image reference){
