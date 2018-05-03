@@ -13,53 +13,81 @@ import javax.management.modelmbean.ModelMBeanOperationInfo;
 import java.io.*;
 import java.lang.Math;
 import java.nio.charset.Charset;
-public class CS4551_Alvarez{
+public class Test{
 
 	static Scanner in = new Scanner(System.in);
 	static int Original_Width;
 	static int Original_Height;
-	static int n,p;
-	public static void main(String[] args) throws IOException{
-		HashSet<Integer> nSet = new HashSet<>(Arrays.asList(8,16,24));
-			HashSet<Integer> pSet = new HashSet<>(Arrays.asList(4,8,12,16));
-
-			if(args.length != 2){
-			  usage();
-			  System.exit(1);
-			}
-			Image refImg = new Image(args[0]);
-			Image tarImg = new Image(args[1]);
-			do {
-				System.out.println("Enter n value (8,16,24) : ");
-				n = in.nextInt();
-			}while(!nSet.contains(n));
-			do {
-				System.out.println("Enter p value(4,8,12,16) : ");
-				p = in.nextInt();
-			}while(!pSet.contains(p));
+	static int n = 24 ,p = 4;
+    public static void main(String[] args){
+        HashSet<Integer> nSet = new HashSet<>(Arrays.asList(8,16,24));
+		HashSet<Integer> pSet = new HashSet<>(Arrays.asList(4,8,12,16));
+        /*
+        for(Integer i: nSet){
+            n = i;
+            for(Integer j: pSet){
+             p = j;
+             try{
+                 runner();
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }
+        */
+         try{
+             runner();
+            }catch(Exception e){
+                e.printStackTrace();
+        }
+        
+    }
+	public static void runner() throws IOException{
+            String file1 = "IDB/Walk_001.ppm";
+            String file2 = "IDB/Walk_001.ppm";
+			Image refImg = new Image(file1);
+			Image tarImg = new Image(file2);
 
 			PixelMatrix[][] macroblocks = getBlocks(tarImg);
             System.out.printf(" dims: %d, %d\n",macroblocks.length,macroblocks[0].length);
-			//rebuildImage(macroblocks);
+			rebuildImage(macroblocks);
 			int[][][] motionVectors =  getMotionVectors(macroblocks, refImg);
-			writeMotionVectors(motionVectors,args[0], args[1],"mv.txt");	 	
+			writeMotionVectors(motionVectors,file1, file2,"test_mv.txt");	 	
 			getResidualImage(macroblocks,motionVectors,refImg);
 		}
 		public static void getResidualImage(PixelMatrix[][] macroblocks, int[][][] mv, Image reference) {
 			Image res = new Image(reference.getW(),reference.getH());
 		    int[] pixel;
             int[] pixel2;
-		    for(int y = 0; y < res.getH(); y++){
+            int[] pixel3;
+            /*
+            int rows = macroblocks.length;
+            int cols = macroblocks[0].length;
+
+            for(int col = 0; col < cols; col++){
+                for(int row = 0; row < rows; row++){
+				
+                }
+			}
+            */
+            int xOffset;
+            int yOffset;
+            for(int y = 0; y < res.getH(); y++){
                 for(int x = 0; x < res.getW(); x++){
                     pixel = new int[3];
                     pixel2 = new int[3];
-                    reference.getPixel(x + mv[x % n][y % n][0], y +  mv[x % n][y % n][1],pixel);
+                    pixel3 = new int[3];
+                    xOffset =  mv[x / n][y / n][0];
+                    yOffset =  mv[x / n][y / n][1];
+                    //if(x/n == 3 && y/n == 2) System.out.printf("(%d,%d)->(%d,%d)\n",x,y, xOffset, yOffset);
+                    reference.getPixel(x + xOffset, y + yOffset,pixel);
                     reference.getPixel(x, y, pixel2);
-                    res.setPixel(x, y, subtractPixel(pixel,pixel2));
+                    pixel3 = subtractPixel( getGrayPixel(pixel), getGrayPixel(pixel2));
+                    res.setPixel(x, y, pixel3);
                 }
             }	
 			res.display();
-			res.write2PPM("res.ppm");
+			res.write2PPM("test_res.ppm");
 		}
         public static int[] subtractPixel(int[] pix1, int[] pix2){
             int[] res = new int[3];
@@ -69,15 +97,18 @@ public class CS4551_Alvarez{
             return res;
         }
 		public static int[][][] getMotionVectors(PixelMatrix[][] macroblocks, Image refImage) {
-			int[][][] motionVectors =  new int[macroblocks.length][macroblocks[0].length][2];
-			for (int y = 0; y < macroblocks[0].length; y++) {
-                for (int x = 0; x < macroblocks.length; x++) {
-                   // System.out.printf( "(x,y), (%d,%d)\n",x * n,y * n);
-			        motionVectors[x][y] = motionVector(x * n,y * n, macroblocks[x][y],refImage);
+            int rows = macroblocks.length;
+            int cols = macroblocks[0].length;
+			int[][][] motionVectors =  new int[rows][cols][2];
+
+            for(int col = 0; col < cols; col++){
+                for(int row = 0; row < rows; row++){
+			        motionVectors[row][col] = motionVector(row * n,col * n, macroblocks[row][col],refImage);
 				}
 			}
 			return motionVectors;
-		}	
+        }
+        /*
 	    public static int[] motionVector(int x, int y, PixelMatrix block, Image reference){
 			int xOffset, endX, yOffset, endY;
 			
@@ -95,17 +126,22 @@ public class CS4551_Alvarez{
             else endY = y + p + n;
             int[] pixel;
             int[] motionVector = new int[2];
-            int total = 0;
+            float total = 0;
             float min = 2147483647; // max possible value for java int
             int ctr = 0;
-            
-            while(xOffset + n < endX && yOffset + n < endY) {	
+            float boxTotal= 0; 
+            while(xOffset + n <= endX && yOffset + n <= endY) {	
+                total = 0;
                 for(int j = 0; j < n; j++) {
                     for(int i = 0; i < n; i++) {
                     pixel = new int[3];
                         reference.getPixel(i + xOffset, j + yOffset, pixel);
                         total += meanSquareDif(block.getPixel(i, j), pixel);
                     }
+                }
+                if(xOffset == x && yOffset == y) {
+                    boxTotal = total;
+                    System.out.println("boxtotal updated");
                 }
                 if(total < min) {
                     min = total;
@@ -117,54 +153,62 @@ public class CS4551_Alvarez{
                     xOffset = xStart;
                     yOffset++;
                 }
-                total = 0;
             } 
-            /*
-            if(x == 0 && y == 8 || x == 184 && y == 136) {
-                System.out.printf("xOffset : %d, yOffset : %d, endX : %d, endY : %d\n", xOffset,yOffset,endX,endY);
-                int v2  =  motionVector[1];	
-                int v1  =  motionVector[0];	
-                System.out.printf("msd %f motion vector (%d,%d)\n",min,v1,v2);
-                System.out.printf("motion vector (%d, %d) : %d,%d\n",x,y,v1,v2);
-            }
-            */
+            System.out.printf("(%d,%d) -> (%d,%d):: boxtotal : %.2f min : %.2f\n",x,y,xOffset,yOffset,boxTotal,min);
             return motionVector;
     } 
-	public static List<PixelMatrix> getPSearchBlocks(int x, int y, Image reference){
-		List<PixelMatrix> matrices = new ArrayList<>();
-		int startX, endX, startY, endY, runningTotal = 0;
-		
-		if(x - p < 0) startX = 0;
-		else startX = x - p;
-		if(y - p < 0) startY = 0;
-		else startY = y - p;
-		
-		if(x + p > reference.getW()) endX = reference.getW();
-		else endX = x + p;
-		if(y + p > reference.getW()) endY = reference.getH();
-		else endY = y + p;
-		
-		PixelMatrix tempMatrix;
-		int mRow = 0, mCol = 0;
-		int[] pixel;
-		while(startX + n < endX && startY + n < endY) {	
-			tempMatrix = new PixelMatrix(n, n);
-			mRow = 0;
-			mCol = 0;
-		
-			for(int j = startY; j < startY + p; j++) {
-				pixel = new int[3];
-				for(int i = startX; i < startX + p; i++) {
-					reference.getPixel(i, j, pixel);
-					tempMatrix.setPixel(mRow, mCol++,pixel);
-				}
-				mRow++;
-				mCol = 0;
-			}
-			matrices.add(tempMatrix);
-		}
-		return matrices;
-	}
+    */
+	public static int[] motionVector(int x, int y, PixelMatrix block, Image reference){
+			int xOffset, endX, yOffset, endY;
+			
+			if(x - p < 0) xOffset = 0;
+			else xOffset = x - p;
+            int xStart = xOffset;
+			
+            if(y - p < 0) yOffset = 0;
+			else yOffset = y - p;
+			int input;
+            
+            if(x + p  + n> reference.getW()) endX = reference.getW();
+            else endX = x + p + n;
+            if(y + p + n > reference.getH()) endY = reference.getH();
+            else endY = y + p + n;
+            int[] pixel;
+            int[] motionVector = new int[2];
+            float total = 0;
+            float min = 2147483647; // max possible value for java int
+            int ctr = 0;
+            float boxTotal= 0;
+            PixelMatrix temp = new PixelMatrix(n,n);
+            while(xOffset + n <= endX && yOffset + n <= endY) {	
+                total = 0;
+                for(int j = 0; j < n; j++) {
+                    for(int i = 0; i < n; i++) {
+                    
+                        pixel = new int[3];
+                        reference.getPixel(i + xOffset, j + yOffset, pixel);
+                        temp.setPixel(i,j,pixel);
+                    }
+                }
+                total = blockComparison(block,temp);
+                if(xOffset == x && yOffset == y) {
+                    boxTotal = total;
+                    System.out.println("boxtotal updated");
+                }
+                if(total < min) {
+                    min = total;
+                    motionVector[0] = xOffset - x;
+                    motionVector[1] = yOffset - y;	
+                }
+                xOffset++;
+                if(xOffset >= endX - n) {
+                    xOffset = xStart;
+                    yOffset++;
+                }
+            } 
+            System.out.printf("(%d,%d) -> (%d,%d):: boxtotal : %.2f min : %.2f\n",x,y,xOffset,yOffset,boxTotal,min);
+            return motionVector;
+    } 
 	public static float blockComparison(PixelMatrix target, PixelMatrix reference) {
 		int total = 0;
 		for(int i = 0; i < target.rows; i++) {
@@ -179,7 +223,7 @@ public class CS4551_Alvarez{
 	}
 	public static PixelMatrix[][] getBlocks(Image img){
 		img.display();
-        PixelMatrix[][] mtx =  new PixelMatrix[img.getH() / n][img.getW() / n];
+        PixelMatrix[][] mtx =  new PixelMatrix[img.getW() / n][img.getH() / n];
 		for(int i = 0; i < mtx.length; i++) {
 			for (int j = 0; j < mtx[0].length; j++) {
 				mtx[i][j] = new PixelMatrix(n,n);
@@ -188,8 +232,8 @@ public class CS4551_Alvarez{
 		int blockRow = 0, blockCol = 0;
 		for(int i = 0; i < mtx.length; i++){
 			for(int j = 0; j < mtx[0].length; j++){
+                for(int x = 0; x < n; x++){
 					for(int y = 0; y < n; y++){
-						for(int x = 0; x < n; x++){
 							int[] pixel = new int[3];
 							img.getPixel(blockCol + x, blockRow + y, pixel);
 							mtx[i][j].setPixel(x, y, pixel);
@@ -207,11 +251,19 @@ public class CS4551_Alvarez{
 	public static int meanSquareDif(int[] a, int[] b) {
 		return(int) Math.pow(grayValue(a)-grayValue(b), 2);
 	}
+    public static int[] getGrayPixel(int[] pixel){
+        int val = grayValue(pixel);
+        int[] ret = {val,val,val};
+        return ret;
+    }
 	public static int grayValue(int[]  pixel) {
 		int r = pixel[2];
 		int g = pixel[1];
 		int b = pixel[0];
-		return (int) Math.round(0.299 *  r + 0.587 * g + 0.114 * b);
+		int gray = (int) Math.round(0.299 *  r + 0.587 * g + 0.114 * b);
+        gray = Math.min(255,gray);
+        gray = Math.max(0,gray);
+        return gray;
 	}
 	public static void testBlocks(PixelMatrix[][] mtx){
 			Image test = new Image(n,n);
@@ -236,8 +288,8 @@ public class CS4551_Alvarez{
 
 		for(int i = 0; i < mtx.length; i++){
 			for(int j = 0; j < mtx[0].length; j++){
+                for(int x = 0; x < n; x++){
 					for(int y = 0; y < n; y++){
-						for(int x = 0; x < n; x++){
 							img.setPixel(blockCol + x, blockRow + y,mtx[i][j].matrix[x][y]);
 						}
 					}
@@ -266,8 +318,8 @@ public class CS4551_Alvarez{
 			+ rows + " x  " + cols + " (image size is " 
 			+ rows * n + " x " + cols * n  + ")\n");
 	    int ctr = 0;	
-		for(int row = 0; row < rows; row++){
-			for(int col = 0; col < cols; col++){
+        for(int col = 0; col < cols; col++){
+            for(int row = 0; row < rows; row++){
 				writer.write("[" + motionvectors[row][col][0]
 						+ "," + motionvectors[row][col][1] + "] ");
                 ctr++;
