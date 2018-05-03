@@ -39,6 +39,7 @@ public class CS4551_Alvarez{
 			}while(!pSet.contains(p));
 
 			PixelMatrix[][] macroblocks = getBlocks(tarImg);
+            System.out.printf(" dims: %d, %d\n",macroblocks.length,macroblocks[0].length);
 			//rebuildImage(macroblocks);
 			int[][][] motionVectors =  getMotionVectors(macroblocks, refImg);
 			writeMotionVectors(motionVectors,args[0], args[1],"mv.txt");	 	
@@ -70,8 +71,9 @@ public class CS4551_Alvarez{
 		public static int[][][] getMotionVectors(PixelMatrix[][] macroblocks, Image refImage) {
 			int[][][] motionVectors =  new int[macroblocks.length][macroblocks[0].length][2];
 			for (int y = 0; y < macroblocks[0].length; y++) {
-				for (int x = 0; x < macroblocks.length; x++) {
-			        motionVectors[x][y] = motionVector(x * n, y * n,macroblocks[x][y],refImage);
+                for (int x = 0; x < macroblocks.length; x++) {
+                   // System.out.printf( "(x,y), (%d,%d)\n",x * n,y * n);
+			        motionVectors[x][y] = motionVector(x * n,y * n, macroblocks[x][y],refImage);
 				}
 			}
 			return motionVectors;
@@ -81,7 +83,9 @@ public class CS4551_Alvarez{
 			
 			if(x - p < 0) xOffset = 0;
 			else xOffset = x - p;
-			if(y - p < 0) yOffset = 0;
+            int xStart = xOffset;
+			
+            if(y - p < 0) yOffset = 0;
 			else yOffset = y - p;
 			int input;
             
@@ -94,11 +98,11 @@ public class CS4551_Alvarez{
             int total = 0;
             float min = 2147483647; // max possible value for java int
             int ctr = 0;
-           
+            
             while(xOffset + n < endX && yOffset + n < endY) {	
-                for(int j = 0; j < n; j++) {
+                for(int i = 0; i < n; i++) {
+                    for(int j = 0; j < n; j++) {
                     pixel = new int[3];
-                    for(int i = 0; i < n; i++) {
                         reference.getPixel(i + xOffset, j + yOffset, pixel);
                         total += meanSquareDif(block.getPixel(i, j), pixel);
                     }
@@ -110,15 +114,20 @@ public class CS4551_Alvarez{
                 }
                 xOffset++;
                 if(xOffset >= endX - n) {
-                    xOffset = 0;
+                    xOffset = xStart;
                     yOffset++;
                 }
                 total = 0;
-            }    
-        //int v1  =  motionVector[0];	
-        //int v2  =  motionVector[1];	
-        //System.out.printf("msd %d motion vector (%d,%d)\n",min,v1,v2);
-        //System.out.printf("motion vector (%d, %d) : %d,%d\n",x,y,v1,v2);
+            } 
+            /*
+            if(x == 0 && y == 8 || x == 184 && y == 136) {
+                System.out.printf("xOffset : %d, yOffset : %d, endX : %d, endY : %d\n", xOffset,yOffset,endX,endY);
+                int v2  =  motionVector[1];	
+                int v1  =  motionVector[0];	
+                System.out.printf("msd %f motion vector (%d,%d)\n",min,v1,v2);
+                System.out.printf("motion vector (%d, %d) : %d,%d\n",x,y,v1,v2);
+            }
+            */
             return motionVector;
     } 
 	public static List<PixelMatrix> getPSearchBlocks(int x, int y, Image reference){
@@ -168,23 +177,9 @@ public class CS4551_Alvarez{
 	public static void usage(){
 		System.out.println("\nUsage: java CS4551_Main [input_ppm_file]\n");
 	}
-	public static float routine(Image current, Image target) {
-		float msd = 0;
-		int[] currPixel = new int[3];
-		int[] tarPixel = new int[3];
-		for(int i = 0; i < 16; i++) {
-			for (int j = 0; j < 16; j++) {
-				current.getPixel(i, j, currPixel);
-				target.getPixel(i, j, tarPixel);
-				msd += Math.pow(currPixel[1]-tarPixel[1],2);
-			}
-		}
-		msd /= n * n;
-		return msd;
-	}
 	public static PixelMatrix[][] getBlocks(Image img){
 		img.display();
-		PixelMatrix[][] mtx =  new PixelMatrix[img.getW() / n][img.getH() / n];
+        PixelMatrix[][] mtx =  new PixelMatrix[img.getH() / n][img.getW() / n];
 		for(int i = 0; i < mtx.length; i++) {
 			for (int j = 0; j < mtx[0].length; j++) {
 				mtx[i][j] = new PixelMatrix(n,n);
@@ -273,8 +268,8 @@ public class CS4551_Alvarez{
 	    int ctr = 0;	
 		for(int row = 0; row < rows; row++){
 			for(int col = 0; col < cols; col++){
-				writer.write("[ " + motionvectors[row][col][0]
-						+ ", " + motionvectors[row][col][1] + "] ");
+				writer.write("[" + motionvectors[row][col][0]
+						+ "," + motionvectors[row][col][1] + "] ");
                 ctr++;
 			}
 			writer.write('\n');
