@@ -18,7 +18,7 @@ public class Test{
 	static Scanner in = new Scanner(System.in);
 	static int Original_Width;
 	static int Original_Height;
-	static int n = 24 ,p = 4;
+	static int n = 8 ,p = 4;
     public static void main(String[] args){
         HashSet<Integer> nSet = new HashSet<>(Arrays.asList(8,16,24));
 		HashSet<Integer> pSet = new HashSet<>(Arrays.asList(4,8,12,16));
@@ -44,7 +44,7 @@ public class Test{
     }
 	public static void runner() throws IOException{
             String file1 = "IDB/Walk_001.ppm";
-            String file2 = "IDB/Walk_001.ppm";
+            String file2 = "IDB/Walk_101.ppm";
 			Image refImg = new Image(file1);
 			Image tarImg = new Image(file2);
 
@@ -87,7 +87,7 @@ public class Test{
                 }
             }	
 			res.display();
-			res.write2PPM("test_res.ppm");
+			res.write2PPM("test_resRow.ppm");
 		}
         public static int[] subtractPixel(int[] pix1, int[] pix2){
             int[] res = new int[3];
@@ -142,6 +142,11 @@ public class Test{
                 if(xOffset == x && yOffset == y) {
                     boxTotal = total;
                     System.out.println("boxtotal updated");
+                    System.out.printf("(%d,%d)\n",x,y);
+                    System.out.println("reference");
+                    //temp.showMatrix();
+                    System.out.println("target");
+                    block.showMatrix();
                 }
                 if(total < min) {
                     min = total;
@@ -159,8 +164,9 @@ public class Test{
     } 
     */
 	public static int[] motionVector(int x, int y, PixelMatrix block, Image reference){
-			int xOffset, endX, yOffset, endY;
 			
+            int xOffset, endX, yOffset, endY;
+			System.out.printf("xy -> %d,%d\n",x,y);
 			if(x - p < 0) xOffset = 0;
 			else xOffset = x - p;
             int xStart = xOffset;
@@ -180,21 +186,17 @@ public class Test{
             int ctr = 0;
             float boxTotal= 0;
             PixelMatrix temp = new PixelMatrix(n,n);
-            while(xOffset + n <= endX && yOffset + n <= endY) {	
+            while(yOffset + n <= endY) {	
                 total = 0;
-                for(int j = 0; j < n; j++) {
-                    for(int i = 0; i < n; i++) {
                     
+                for(int i = 0; i < n; i++) {
+                    for(int j = 0; j < n; j++) {
                         pixel = new int[3];
-                        reference.getPixel(i + xOffset, j + yOffset, pixel);
+                        reference.getPixel(xOffset + i, yOffset + j, pixel);
                         temp.setPixel(i,j,pixel);
                     }
                 }
                 total = blockComparison(block,temp);
-                if(xOffset == x && yOffset == y) {
-                    boxTotal = total;
-                    System.out.println("boxtotal updated");
-                }
                 if(total < min) {
                     min = total;
                     motionVector[0] = xOffset - x;
@@ -206,13 +208,12 @@ public class Test{
                     yOffset++;
                 }
             } 
-            System.out.printf("(%d,%d) -> (%d,%d):: boxtotal : %.2f min : %.2f\n",x,y,xOffset,yOffset,boxTotal,min);
             return motionVector;
     } 
 	public static float blockComparison(PixelMatrix target, PixelMatrix reference) {
 		int total = 0;
-		for(int i = 0; i < target.rows; i++) {
-			for(int j = 0; j < target.cols; j++) {
+        for(int j = 0; j < target.cols; j++) {
+            for(int i = 0; i < target.rows; i++) {
 				total += meanSquareDif(target.getPixel(i, j), reference.getPixel(i, j));
 			}
 		}
@@ -230,8 +231,8 @@ public class Test{
 			}
 		}
 		int blockRow = 0, blockCol = 0;
-		for(int i = 0; i < mtx.length; i++){
-			for(int j = 0; j < mtx[0].length; j++){
+        for(int j = 0; j < mtx[0].length; j++){
+            for(int i = 0; i < mtx.length; i++){
                 for(int x = 0; x < n; x++){
 					for(int y = 0; y < n; y++){
 							int[] pixel = new int[3];
@@ -283,11 +284,11 @@ public class Test{
 			}
 	}
 	public static void rebuildImage(PixelMatrix[][] mtx) {
-		Image img = new Image( n * mtx.length, n * mtx[0].length);
+        Image img = new Image( n * mtx.length, n * mtx[0].length);
 		int blockRow = 0, blockCol = 0;
 
-		for(int i = 0; i < mtx.length; i++){
-			for(int j = 0; j < mtx[0].length; j++){
+        for(int j = 0; j < mtx[0].length; j++){
+            for(int i = 0; i < mtx.length; i++){
                 for(int x = 0; x < n; x++){
 					for(int y = 0; y < n; y++){
 							img.setPixel(blockCol + x, blockRow + y,mtx[i][j].matrix[x][y]);
