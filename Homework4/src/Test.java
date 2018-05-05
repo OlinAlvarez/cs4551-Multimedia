@@ -36,7 +36,8 @@ public class Test{
         }
         */
          try{
-             runner();
+             //runner();
+             removeMovingObjects();
             }catch(Exception e){
                 e.printStackTrace();
         }
@@ -49,7 +50,6 @@ public class Test{
 			Image tarImg = new Image(file2);
 
 			PixelMatrix[][] macroblocks = getBlocks(tarImg);
-            System.out.printf(" dims: %d, %d\n",macroblocks.length,macroblocks[0].length);
 			rebuildImage(macroblocks);
 			int[][][] motionVectors =  getMotionVectors(macroblocks, refImg);
 			writeMotionVectors(motionVectors,file1, file2,"test_mv.txt");	 	
@@ -60,16 +60,6 @@ public class Test{
 		    int[] pixel;
             int[] pixel2;
             int[] pixel3;
-            /*
-            int rows = macroblocks.length;
-            int cols = macroblocks[0].length;
-
-            for(int col = 0; col < cols; col++){
-                for(int row = 0; row < rows; row++){
-				
-                }
-			}
-            */
             int xOffset;
             int yOffset;
             for(int y = 0; y < res.getH(); y++){
@@ -79,16 +69,23 @@ public class Test{
                     pixel3 = new int[3];
                     xOffset =  mv[x / n][y / n][0];
                     yOffset =  mv[x / n][y / n][1];
-                    //if(x/n == 3 && y/n == 2) System.out.printf("(%d,%d)->(%d,%d)\n",x,y, xOffset, yOffset);
                     reference.getPixel(x + xOffset, y + yOffset,pixel);
                     reference.getPixel(x, y, pixel2);
                     pixel3 = subtractPixel( getGrayPixel(pixel), getGrayPixel(pixel2));
+                    pixel3 =  trimError(pixel3);
                     res.setPixel(x, y, pixel3);
                 }
             }	
 			res.display();
 			res.write2PPM("test_resRow.ppm");
 		}
+        
+        public static int[] trimError(int[] pixel){
+            int ret = Math.max(pixel[0],0);
+            ret = Math.min(ret,255);
+            int[] r = {ret,ret,ret};
+            return r;
+        }
         public static int[] subtractPixel(int[] pix1, int[] pix2){
             int[] res = new int[3];
             res[0] = Math.abs(pix1[0]-pix2[0]);
@@ -108,66 +105,11 @@ public class Test{
 			}
 			return motionVectors;
         }
-        /*
-	    public static int[] motionVector(int x, int y, PixelMatrix block, Image reference){
-			int xOffset, endX, yOffset, endY;
-			
-			if(x - p < 0) xOffset = 0;
-			else xOffset = x - p;
-            int xStart = xOffset;
-			
-            if(y - p < 0) yOffset = 0;
-			else yOffset = y - p;
-			int input;
-            
-            if(x + p  + n> reference.getW()) endX = reference.getW();
-            else endX = x + p + n;
-            if(y + p + n > reference.getH()) endY = reference.getH();
-            else endY = y + p + n;
-            int[] pixel;
-            int[] motionVector = new int[2];
-            float total = 0;
-            float min = 2147483647; // max possible value for java int
-            int ctr = 0;
-            float boxTotal= 0; 
-            while(xOffset + n <= endX && yOffset + n <= endY) {	
-                total = 0;
-                for(int j = 0; j < n; j++) {
-                    for(int i = 0; i < n; i++) {
-                    pixel = new int[3];
-                        reference.getPixel(i + xOffset, j + yOffset, pixel);
-                        total += meanSquareDif(block.getPixel(i, j), pixel);
-                    }
-                }
-                if(xOffset == x && yOffset == y) {
-                    boxTotal = total;
-                    System.out.println("boxtotal updated");
-                    System.out.printf("(%d,%d)\n",x,y);
-                    System.out.println("reference");
-                    //temp.showMatrix();
-                    System.out.println("target");
-                    block.showMatrix();
-                }
-                if(total < min) {
-                    min = total;
-                    motionVector[0] = xOffset - x;
-                    motionVector[1] = yOffset - y;	
-                }
-                xOffset++;
-                if(xOffset >= endX - n) {
-                    xOffset = xStart;
-                    yOffset++;
-                }
-            } 
-            System.out.printf("(%d,%d) -> (%d,%d):: boxtotal : %.2f min : %.2f\n",x,y,xOffset,yOffset,boxTotal,min);
-            return motionVector;
-    } 
-    */
 	public static int[] motionVector(int x, int y, PixelMatrix block, Image reference){
 			
             int xOffset, endX, yOffset, endY;
-			System.out.printf("xy -> %d,%d\n",x,y);
-			if(x - p < 0) xOffset = 0;
+			
+            if(x - p < 0) xOffset = 0;
 			else xOffset = x - p;
             int xStart = xOffset;
 			
@@ -186,6 +128,7 @@ public class Test{
             int ctr = 0;
             float boxTotal= 0;
             PixelMatrix temp = new PixelMatrix(n,n);
+            
             while(yOffset + n <= endY) {	
                 total = 0;
                     
@@ -266,23 +209,6 @@ public class Test{
         gray = Math.max(0,gray);
         return gray;
 	}
-	public static void testBlocks(PixelMatrix[][] mtx){
-			Image test = new Image(n,n);
-			System.out.printf("number of blocks %d\n", mtx.length * mtx[0].length);
-			
-			for(int i = 0; i < mtx.length; i++){
-				for(int j = 0; j < mtx[0].length; j++){
-					if(i == j){
-						for(int y = 0; y < n; y++){
-							for(int x = 0; x < n; x++){
-								test.setPixel(x, y, mtx[i][j].matrix[x][y]);
-							}
-						}
-						test.display();
-					}
-				}
-			}
-	}
 	public static void rebuildImage(PixelMatrix[][] mtx) {
         Image img = new Image( n * mtx.length, n * mtx[0].length);
 		int blockRow = 0, blockCol = 0;
@@ -330,4 +256,122 @@ public class Test{
 		writer.close();
 		System.out.println(filename + " written");
 	}
+    /*
+     *Beginning of section 2
+     * */
+   public static void removeMovingObjects() throws IOException{
+        System.out.println("Enter target image: ");
+        int tarNum;
+        do{
+            System.out.println("\n Image Loaded\n select number in range 19 - 179: ");
+            tarNum = in.nextInt();
+        }while(tarNum > 179 || tarNum < 19);
+        int refNum = tarNum - 2; 
+        String pic =  "" + tarNum;
+        String pic2 =  "" + refNum;
+        if(tarNum < 100){
+            pic = "0" + pic; 
+        }
+        if(refNum < 100){
+            pic2 = "0" + pic2;
+        }
+        String tarFilePath = "IDB/Walk_" + pic + ".ppm";
+        String refFilePath = "IDB/Walk_" + pic2 + ".ppm";
+        Image target = new Image(tarFilePath);
+        Image reference = new Image(refFilePath);
+          
+        PixelMatrix[][] macroblocks = getBlocks(target);
+        rebuildImage(macroblocks);
+        int[][][] motionVectors =  getMotionVectors(macroblocks, reference);
+        showRedBlocks(macroblocks,motionVectors);
+        fifthFrame(macroblocks,motionVectors);
+        staticFrame(macroblocks,motionVectors,target);
+        writeMotionVectors(motionVectors,tarFilePath,refFilePath,"rmo_mv.txt");
+   } 
+   public static void showRedBlocks(PixelMatrix[][] blocks, int[][][] mv){
+        int[]  redPixel = {255,40,0} ; // I didn't want the image to be just red wanted to add a little more of a complex color.
+        Image img = new Image( n * blocks.length, n * blocks[0].length);
+		int blockRow = 0, blockCol = 0;
+        int xOffset, yOffset;
+        for(int j = 0; j < blocks[0].length; j++){
+            for(int i = 0; i < blocks.length; i++){
+                xOffset =  mv[i][j][0];
+                yOffset =  mv[i][j][1];
+                for(int x = 0; x < n; x++){
+					for(int y = 0; y < n; y++){
+						    if( xOffset != 0 || yOffset != 0) img.setPixel(blockCol + x, blockRow + y,redPixel);
+                            else img.setPixel(blockCol + x, blockRow + y,blocks[i][j].matrix[x][y]);
+						}
+					}
+					blockCol += n;
+					if(blockCol >= img.getW()) {
+						blockCol = 0;
+						blockRow += n;
+					}
+			}
+		}
+		img.display();
+		img.write2PPM("redBlocks.ppm");
+   }
+   public static void fifthFrame(PixelMatrix[][] blocks, int[][][] mv){
+        Image fifth = new Image("IDB/Walk_005.ppm");
+        Image img = new Image( n * blocks.length, n * blocks[0].length);
+		int blockRow = 0, blockCol = 0;
+        int xOffset, yOffset;
+        int[] pixel;
+        for(int j = 0; j < blocks[0].length; j++){
+            for(int i = 0; i < blocks.length; i++){
+                xOffset =  mv[i][j][0];
+                yOffset =  mv[i][j][1];
+                for(int x = 0; x < n; x++){
+					for(int y = 0; y < n; y++){
+						    if( xOffset != 0 || yOffset != 0){
+                                pixel = new int[3];
+                                fifth.getPixel(blockCol + x, blockRow + y,pixel);
+                                img.setPixel(blockCol + x, blockRow + y,pixel);
+                            }
+                            else img.setPixel(blockCol + x, blockRow + y,blocks[i][j].matrix[x][y]);
+						}
+					}
+					blockCol += n;
+					if(blockCol >= img.getW()) {
+						blockCol = 0;
+						blockRow += n;
+					}
+			}
+		}
+		img.display();
+		img.write2PPM("fifthFrameReplacement.ppm");
+   }
+
+   public static void staticFrame(PixelMatrix[][] blocks, int[][][] mv, Image reference){
+        Image img = new Image( n * blocks.length, n * blocks[0].length);
+		int blockRow = 0, blockCol = 0;
+        int xOffset, yOffset;
+        int[] pixel;
+        for(int j = 0; j < blocks[0].length; j++){
+            for(int i = 0; i < blocks.length; i++){
+                xOffset =  mv[i][j][0];
+                yOffset =  mv[i][j][1];
+                for(int x = 0; x < n; x++){
+					for(int y = 0; y < n; y++){
+						    if( xOffset != 0 || yOffset != 0){
+                                pixel = new int[3];
+                                reference.getPixel(blockCol + x, blockRow + y,pixel);
+                                img.setPixel(blockCol + x, blockRow + y,pixel);
+                            }
+                            else img.setPixel(blockCol + x, blockRow + y,blocks[i][j].matrix[x][y]);
+						}
+					}
+					blockCol += n;
+					if(blockCol >= img.getW()) {
+						blockCol = 0;
+						blockRow += n;
+					}
+			}
+		}
+		img.display();
+		img.write2PPM("staticFrameReplacement.ppm");
+   
+   }
 }
