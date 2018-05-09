@@ -1,0 +1,32 @@
+LZW_test1.txt
+
+ Original Content:
+--------------------
+abacabab
+
+
+--Dictionary Contents: 
+
+Index-----Value 
+ 0	   a
+ 1	   b
+ 2	   c
+ 3	   
+
+ 4	   ab
+ 5	   ba
+ 6	   ac
+ 7	   ca
+ 8	   aba
+ 9	   ab
+
+
+ Encoded text:
+--------------------
+0 1 0 2 4 4 3
+ Decoded text:
+--------------------
+abacabab
+
+
+ Compression ratio: 1.3

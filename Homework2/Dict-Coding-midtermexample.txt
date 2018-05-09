@@ -1,0 +1,36 @@
+midtermexample.txt
+
+ Original Content:
+--------------------
+abbcaabbaacca
+
+
+--Dictionary Contents: 
+
+Index-----Value 
+ 0	   a
+ 1	   b
+ 2	   c
+ 3	   
+
+ 4	   ab
+ 5	   bb
+ 6	   bc
+ 7	   ca
+ 8	   aa
+ 9	   abb
+ 10	   ba
+ 11	   aac
+ 12	   cc
+ 13	   ca
+
+
+ Encoded text:
+--------------------
+0 1 1 2 0 4 1 8 2 7 3
+ Decoded text:
+--------------------
+abbcaabbaacca
+
+
+ Compression ratio: 1.4

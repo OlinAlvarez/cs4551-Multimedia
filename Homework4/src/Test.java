@@ -18,35 +18,52 @@ public class Test{
 	static Scanner in = new Scanner(System.in);
 	static int Original_Width;
 	static int Original_Height;
-	static int n = 8 ,p = 4;
+	static int n,p;
     public static void main(String[] args){
-        HashSet<Integer> nSet = new HashSet<>(Arrays.asList(8,16,24));
-		HashSet<Integer> pSet = new HashSet<>(Arrays.asList(4,8,12,16));
-        /*
-        for(Integer i: nSet){
-            n = i;
-            for(Integer j: pSet){
-             p = j;
-             try{
-                 runner();
-                }catch(Exception e){
-                    e.printStackTrace();
-                }
-            }
-        }
-        */
-         try{
-             //runner();
-             removeMovingObjects();
-            }catch(Exception e){
-                e.printStackTrace();
-        }
-        
+        int choice;
+		do{
+			choice = displayMenu();		
+		}while(choice != 1 && choice != 2 && choice != 3); 
+		
+		try{
+			if(choice  == 1) motionCompensation();
+			if(choice  == 2) removeMovingObjects();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
     }
-	public static void runner() throws IOException{
-            String file1 = "IDB/Walk_001.ppm";
-            String file2 = "IDB/Walk_101.ppm";
-			Image refImg = new Image(file1);
+	 public static int displayMenu(){
+     
+     System.out.println("--------------------Main Men--------------------");
+     System.out.println("1. Blocked Based Motion Compensation");
+     System.out.println("2. Remove Moving Objects");
+     System.out.println("3. Quit");
+     return in.nextInt(); 
+   }
+
+	public static void motionCompensation() throws IOException{
+            
+            HashSet<Integer> nSet = new HashSet<>(Arrays.asList(8,16,24));
+            HashSet<Integer> pSet = new HashSet<>(Arrays.asList(4,8,12,16));
+            
+			do {
+                 System.out.println("Enter n value (8,16,24) : ");
+                 n = in.nextInt();
+             }while(!nSet.contains(n));
+             do {
+                 System.out.println("Enter p value(4,8,12,16) : ");
+                 p = in.nextInt();
+             }while(!pSet.contains(p)); 
+			in = new Scanner(System.in);
+			String file1;
+            String file2;
+            System.out.print("Enter First Image: ");
+            file1 = in.nextLine();
+            
+            System.out.print("Enter Second Image: ");
+            file2 = in.nextLine();
+			
+            Image refImg = new Image(file1);
 			Image tarImg = new Image(file2);
 
 			PixelMatrix[][] macroblocks = getBlocks(tarImg);
@@ -130,6 +147,7 @@ public class Test{
             PixelMatrix temp = new PixelMatrix(n,n);
             
             while(yOffset + n <= endY) {	
+
                 total = 0;
                     
                 for(int i = 0; i < n; i++) {
@@ -150,7 +168,7 @@ public class Test{
                     xOffset = xStart;
                     yOffset++;
                 }
-            } 
+            }
             return motionVector;
     } 
 	public static float blockComparison(PixelMatrix target, PixelMatrix reference) {
@@ -260,7 +278,8 @@ public class Test{
      *Beginning of section 2
      * */
    public static void removeMovingObjects() throws IOException{
-        System.out.println("Enter target image: ");
+        n  = 8;
+        p = 8;
         int tarNum;
         do{
             System.out.println("\n Image Loaded\n select number in range 19 - 179: ");
@@ -349,6 +368,8 @@ public class Test{
 		int blockRow = 0, blockCol = 0;
         int xOffset, yOffset;
         int[] pixel;
+        int[] bc;
+        PixelMatrix block;
         for(int j = 0; j < blocks[0].length; j++){
             for(int i = 0; i < blocks.length; i++){
                 xOffset =  mv[i][j][0];
@@ -357,7 +378,9 @@ public class Test{
 					for(int y = 0; y < n; y++){
 						    if( xOffset != 0 || yOffset != 0){
                                 pixel = new int[3];
-                                reference.getPixel(blockCol + x, blockRow + y,pixel);
+                                bc = getNearestStaticMotionVector(i,j,mv);//bc for Block Coordinates;
+                                block =  blocks[bc[0]][bc[1]];
+                                pixel = block.getPixel(x,y);
                                 img.setPixel(blockCol + x, blockRow + y,pixel);
                             }
                             else img.setPixel(blockCol + x, blockRow + y,blocks[i][j].matrix[x][y]);
@@ -373,5 +396,25 @@ public class Test{
 		img.display();
 		img.write2PPM("staticFrameReplacement.ppm");
    
+   }
+
+   public static int[] getNearestStaticMotionVector(int row, int col, int[][][] mv){
+        int[] ret = new int[2]; 
+    
+        int num1, num2;
+        for(int j = col; j < mv[0].length; j++){
+            for(int i = row; i < mv.length; i++){
+               num1 = mv[i][j][0]; 
+               num2 = mv[i][j][1]; 
+               if(num1 == 0 && num2 == 0){
+                    ret[0] = i;
+                    ret[1] = j;
+                    return ret;
+               }
+            }
+        }
+        ret[0] = row;
+        ret[1] = col;
+        return ret;
    }
 }
